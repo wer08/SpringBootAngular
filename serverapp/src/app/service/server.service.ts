@@ -13,7 +13,7 @@ export class ServerService {
     console.log(error)
     return throwError(()=>error);
   }
-  private readonly apiUrl = 'any';
+  private readonly apiUrl = 'http://localhost:8081';
 
 
   constructor(private http: HttpClient) { }
@@ -22,19 +22,19 @@ export class ServerService {
   .pipe(
     tap(console.log),
     catchError(this.handleErrror)
-  )
+  );
 
   save$ = (server:Server) => <Observable<CustomResponse>>this.http.post<CustomResponse>(`${this.apiUrl}/server/save`,server)
   .pipe(
     tap(console.log),
     catchError(this.handleErrror)
-  )
+  );
 
   ping$ = (ipAddress: string) => <Observable<CustomResponse>>this.http.get<CustomResponse>(`${this.apiUrl}/server/ping/${ipAddress}`)
   .pipe(
     tap(console.log),
     catchError(this.handleErrror)
-  )
+  );
 
   filter$ = (status: Status, response: CustomResponse) => <Observable<CustomResponse>>
   new Observable<CustomResponse>(
@@ -57,11 +57,11 @@ export class ServerService {
   .pipe(
     tap(console.log),
     catchError(this.handleErrror)
-  )
+  );
 
   delete$ = (serverId: number)=> <Observable<CustomResponse>>this.http.delete<CustomResponse>(`${this.apiUrl}/server/delete/${serverId}`)
   .pipe(
     tap(console.log),
     catchError(this.handleErrror)
-  )
+  );
 }
