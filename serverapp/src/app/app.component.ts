@@ -17,6 +17,8 @@ import { catchError } from 'rxjs/internal/operators/catchError';
 export class AppComponent implements OnInit{
   title = 'serverapp';
   appState$: Observable<AppState<CustomResponse>>
+  readonly DataState = DataState;
+
   constructor(private serverService: ServerService){}
 
   ngOnInit(): void {
