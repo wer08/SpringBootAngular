@@ -8,6 +8,8 @@ import { DataState } from './enum/data-state.enum';
 import { startWith } from 'rxjs/internal/operators/startWith';
 import { of } from 'rxjs/internal/observable/of';
 import { catchError } from 'rxjs/internal/operators/catchError';
+import { Status } from './enum/status.enum';
+import { BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -18,6 +20,9 @@ export class AppComponent implements OnInit{
   title = 'serverapp';
   appState$: Observable<AppState<CustomResponse>>
   readonly DataState = DataState;
+  readonly Status = Status;
+  private filterSubject = new BehaviorSubject<string>('');
+  filterStatus$ = this.filterSubject.asObservable();
 
   constructor(private serverService: ServerService){}
 

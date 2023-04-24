@@ -41,20 +41,22 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr *ngFor="let server of appState.appData.data.servers">
-                                <td><img src={{server.imageUrl}} width="40" height="40"></td>
+                        <tbody *ngFor="let server of appState.appData.data.servers">
+                            <tr >
+                                <td><img [src]="server.imageUrl" [alt]="server.imageUrl" width="40" height="40"></td>
                                 <td>{{server.ipAddress}}</td>
                                 <td>{{server.name}}</td>
                                 <td>{{server.memory}}</td>
                                 <td>{{server.type}}</td>
                                 <td>
-                                    <span class="badge">{{server.status}}</span>
+                                    <span class="badge"
+                                    [ngClass]="[server.status === Status.SERVER_UP ? ' bg-success ' : 'bg-danger']">
+                                    {{server.status === Status.SERVER_UP ? 'SERVER UP' : 'SERVER DOWN'}}</span>
                                 </td>
                                 <td>
-                                    <a style="cursor:pointerl">
-                                        <i class="material-icons" title="Ping Server">&#xe328;</i>
-                                        <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+                                    <a style="cursor:pointer">
+                                        <i *ngIf="(filterStatus$ | async) === '' || (filterStatus$ | async) !== server.ipAddress" class="material-icons" title="Ping Server">&#xe328;</i>
+                                        <i *ngIf="(filterStatus$ | async) === server.ipAddress" class="fa fa-spinner fa-spin" style="font-size:24px"></i>
                                     </a>
                                 </td>
                                 <td>
@@ -68,7 +70,7 @@
                 </ng-container>
                 <ng-container *ngSwitchCase="DataState.ERROR_STATE">
                     <div class="alert-danger">
-                        error
+                        {{appState.error}}
                     </div>
                 </ng-container>
             </ng-container>
