@@ -7,7 +7,11 @@
                     <h2>Manage Servers</h2>
                 </div>
                 <div class="col-sm-6">
-                    <button type="button" class="btn btn-primary me-1">Print Report</button>
+                    <select name="status" class="btn btn-warning me-1" style="height: 32,91px;" (change)="saveReport($event)">
+                        <option value="pdf">Print report</option>
+                        <option value="xml">Save to xml</option>
+                    </select>
+
                     <a href="#addEmployeeModal" class="btn btn-success me-1" data-bs-toggle="modal">
                         <span> New Server</span>
                     </a>
