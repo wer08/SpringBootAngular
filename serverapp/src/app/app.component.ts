@@ -12,7 +12,8 @@ import { Status } from './enum/status.enum';
 import { Server } from './interface/server';
 import { BehaviorSubject } from 'rxjs';
 import { FormBuilder } from '@angular/forms';
-import {NgForm} from '@angular/forms'
+import {NgForm} from '@angular/forms';
+import { NotifierService } from 'angular-notifier';
 
 
 @Component({
@@ -23,6 +24,7 @@ import {NgForm} from '@angular/forms'
 export class AppComponent implements OnInit{
   title = 'serverapp';
   appState$: Observable<AppState<CustomResponse>>
+  private readonly notifier: NotifierService;
   readonly DataState = DataState;
   readonly Status = Status;
   selectedStatus: Status = Status.ALL;
@@ -44,9 +46,12 @@ export class AppComponent implements OnInit{
   })
 
   constructor(
+    private notifierService: NotifierService,
     private serverService: ServerService,
     private formBuilder: FormBuilder,
-    ){}
+    ){
+      this.notifier = notifierService;
+    }
 
   ngOnInit(): void {
     this.appState$ = this.serverService.servers$
@@ -77,6 +82,7 @@ export class AppComponent implements OnInit{
             server.id === response.data.server.id)
         ] = response.data.server
         this.filterSubject.next("");
+        this.notifier.notify('default',response.message)
         return {
           dataState: DataState.LOADED_STATE,
           appData: this.dataSubject.value
@@ -90,107 +96,113 @@ export class AppComponent implements OnInit{
         this.filterSubject.next("");
         return of({dataState: DataState.ERROR_STATE, error})
       })
-    );
-  }
-
-  saveServer(serverForm: NgForm): void {
-    this.isLoading.next(true);
-    this.appState$ = this.serverService.save$(serverForm.value)
-    .pipe(
-      map(response => {
-        this.dataSubject.next(
-          {...response, data: {servers: [response.data.server, ...this.dataSubject.value.data.servers]}}
-        );
-        this.isLoading.next(false);
-        serverForm.resetForm( {status: this.Status.SERVER_DOWN} );
-        return {
-          dataState: DataState.LOADED_STATE,
-          appData: this.dataSubject.value
-        }
-      }),
-      startWith({
-        dataState: DataState.LOADED_STATE,
-        appData: this.dataSubject.value
-      }),
-      catchError((error: any) => {
-        this.isLoading.next(false);
-        return of({dataState: DataState.ERROR_STATE, error})
-      })
-    );
-  }
-
-  deleteServer(serverId: number): void {
-    this.appState$ = this.serverService.delete$(serverId)
-    .pipe(
-      map(response => {
-        this.dataSubject.next({...response, data: {
-          servers: this.dataSubject.value.data.servers.filter(s => s.id !== serverId)
-        }})
-        return {
-          dataState: DataState.LOADED_STATE,
-          appData: this.dataSubject.value
-        }
-      }),
-      startWith({
-        dataState: DataState.LOADED_STATE,
-        appData: this.dataSubject.value
-      }),
-      catchError((error: any) => {
-        this.isLoading.next(false);
-        return of({dataState: DataState.ERROR_STATE, error})
-      })
-    );
-  }
-
-
-  filterServers(event: Event): void {
-    let status = Status.ALL
-    switch((event.target as HTMLSelectElement).value){
-      case "ALL":
-        status = Status.ALL;
-        break;
-      case "SERVER_UP":
-        status = Status.SERVER_UP;
-        break;
-      case "SERVER_DOWN":
-        status = Status.SERVER_DOWN;
-        break;
+      );
     }
-    this.appState$ = this.serverService.filter$(status,this.dataSubject.value)
-    .pipe(
-      map(response => {
-        return {
-          dataState: DataState.LOADED_STATE,
-          appData: response
+    
+    saveServer(serverForm: NgForm): void {
+      this.isLoading.next(true);
+      this.appState$ = this.serverService.save$(serverForm.value)
+      .pipe(
+        map(response => {
+          this.dataSubject.next(
+            {...response, data: {servers: [response.data.server, ...this.dataSubject.value.data.servers]}}
+            );
+            this.isLoading.next(false);
+            serverForm.resetForm( {status: this.Status.SERVER_DOWN} );
+            
+            this.notifier.notify('default',response.message)
+            return {
+              dataState: DataState.LOADED_STATE,
+              appData: this.dataSubject.value
+            }
+          }),
+          startWith({
+            dataState: DataState.LOADED_STATE,
+            appData: this.dataSubject.value
+          }),
+          catchError((error: any) => {
+            this.isLoading.next(false);
+            return of({dataState: DataState.ERROR_STATE, error})
+          })
+          );
         }
-      }),
-      startWith({
-        dataState: DataState.LOADED_STATE,
-        appData: this.dataSubject.value
-      }),
-      catchError((error: any) => {
+        
+        deleteServer(serverId: number): void {
+          this.appState$ = this.serverService.delete$(serverId)
+          .pipe(
+            map(response => {
+              this.dataSubject.next({...response, data: {
+                servers: this.dataSubject.value.data.servers.filter(s => s.id !== serverId)
+              }})
+              this.notifier.notify('default',response.message)
+              return {
+                dataState: DataState.LOADED_STATE,
+                appData: this.dataSubject.value
+              }
+            }),
+            startWith({
+              dataState: DataState.LOADED_STATE,
+              appData: this.dataSubject.value
+            }),
+            catchError((error: any) => {
+        this.isLoading.next(false);
         return of({dataState: DataState.ERROR_STATE, error})
       })
-    );
-  }
-
-  saveReport(event: Event): void{
-    switch((event.target as HTMLSelectElement).value){
-      case "pdf":
-        window.print();
-        break;
-      case "xml":
-        let dataType = 'application/vnd.ms-excel.sheet.macroEnabled.12';
-        let tableSelect = document.getElementById("servers");
-        let tableHtml = tableSelect.outerHTML.replace(/ /g,'%20');
-        let downloadLink = document.createElement('a');
-        document.body.appendChild(downloadLink);
-        downloadLink.href = 'data:' + dataType + ", " + tableHtml;
-        downloadLink.download = 'server-report.xls';
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        break;
+      );
     }
+    
+    
+    filterServers(event: Event): void {
+      let status = Status.ALL
+      switch((event.target as HTMLSelectElement).value){
+        case "ALL":
+          status = Status.ALL;
+          break;
+          case "SERVER_UP":
+            status = Status.SERVER_UP;
+            break;
+            case "SERVER_DOWN":
+              status = Status.SERVER_DOWN;
+              break;
+            }
+            this.appState$ = this.serverService.filter$(status,this.dataSubject.value)
+            .pipe(
+              map(response => {
+                this.notifier.notify('default',response.message)
+                return {
+                  dataState: DataState.LOADED_STATE,
+                  appData: response
+                }
+              }),
+              startWith({
+                dataState: DataState.LOADED_STATE,
+                appData: this.dataSubject.value
+              }),
+              catchError((error: any) => {
+                return of({dataState: DataState.ERROR_STATE, error})
+              })
+              );
+            }
+            
+            saveReport(event: Event): void{
+              switch((event.target as HTMLSelectElement).value){
+                case "pdf":
+                  window.print();
+                  this.notifier.notify('default',"Server printed");
+                  break;
+                  case "xml":
+                    let dataType = 'application/vnd.ms-excel.sheet.macroEnabled.12';
+                    let tableSelect = document.getElementById("servers");
+                    let tableHtml = tableSelect.outerHTML.replace(/ /g,'%20');
+                    let downloadLink = document.createElement('a');
+                    document.body.appendChild(downloadLink);
+                    downloadLink.href = 'data:' + dataType + ", " + tableHtml;
+                    downloadLink.download = 'server-report.xls';
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    this.notifier.notify('default',"Server saved to xml");
+                    break;
+                  }
 
   }
 }
